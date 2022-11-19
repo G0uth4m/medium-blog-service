@@ -6,14 +6,13 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import com.goutham.mediumblogservice.dto.appUser.AppUserCreationDTO;
 import com.goutham.mediumblogservice.dto.appUser.AppUserDTO;
 import com.goutham.mediumblogservice.dto.appUser.AppUserUpdationDTO;
-import com.goutham.mediumblogservice.entity.AppUser;
+import com.goutham.mediumblogservice.dto.blog.BlogDTO;
 import com.goutham.mediumblogservice.service.AppUserService;
+import com.goutham.mediumblogservice.service.BlogService;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -32,56 +31,64 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppUserController {
 
   private final AppUserService appUserService;
-  private final ModelMapper modelMapper;
+  private final BlogService blogService;
 
   @PostMapping
   public EntityModel<AppUserDTO> createUser(
       @Valid @RequestBody AppUserCreationDTO appUserCreationDTO) {
-    AppUser appUser = modelMapper.map(appUserCreationDTO, AppUser.class);
-    appUser = appUserService.createUser(appUser);
-    AppUserDTO appUserDTO = modelMapper.map(appUser, AppUserDTO.class);
-    return EntityModel.of(appUserDTO,
-        linkTo(methodOn(AppUserController.class).getUser(appUserDTO.getId())).withSelfRel(),
+    AppUserDTO user = appUserService.createUser(appUserCreationDTO);
+    return EntityModel.of(user,
+        linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
-  @PutMapping("/{id}")
-  public EntityModel<AppUserDTO> updateUser(@PathVariable Long id,
+  @PutMapping("/{userId}")
+  public EntityModel<AppUserDTO> updateUser(@PathVariable Long userId,
       @Valid @RequestBody AppUserUpdationDTO appUserUpdationDTO) {
-    AppUser appUser = modelMapper.map(appUserUpdationDTO, AppUser.class);
-    appUser = appUserService.updateUser(id, appUser);
-    AppUserDTO appUserDTO = modelMapper.map(appUser, AppUserDTO.class);
-    return EntityModel.of(appUserDTO,
-        linkTo(methodOn(AppUserController.class).getUser(appUser.getId())).withSelfRel(),
+    AppUserDTO user = appUserService.updateUser(userId, appUserUpdationDTO);
+    return EntityModel.of(user,
+        linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
-  @GetMapping("/{id}")
-  public EntityModel<AppUserDTO> getUser(@PathVariable Long id) {
-    AppUser appUser = appUserService.getUser(id);
-    AppUserDTO appUserDTO = modelMapper.map(appUser, AppUserDTO.class);
-    return EntityModel.of(appUserDTO,
-        linkTo(methodOn(AppUserController.class).getUser(id)).withSelfRel(),
+  @GetMapping("/{userId}")
+  public EntityModel<AppUserDTO> getUser(@PathVariable Long userId) {
+    AppUserDTO user = appUserService.getUser(userId);
+    return EntityModel.of(user,
+        linkTo(methodOn(AppUserController.class).getUser(userId)).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
   @GetMapping
   public CollectionModel<EntityModel<AppUserDTO>> getUsers(Pageable pageable) {
-    Page<AppUser> appUsers = appUserService.getUsers(pageable);
-    List<AppUserDTO> appUserDTOS = appUsers.stream()
-        .map(appUser -> modelMapper.map(appUser, AppUserDTO.class)).collect(Collectors.toList());
-    List<EntityModel<AppUserDTO>> appUserEntityModels = appUserDTOS.stream().map(
-            appUserDTO -> EntityModel.of(appUserDTO,
-                linkTo(methodOn(AppUserController.class).getUser(appUserDTO.getId())).withSelfRel(),
+    List<AppUserDTO> appUsers = appUserService.getUsers(pageable);
+    List<EntityModel<AppUserDTO>> users = appUsers.stream().map(
+            user -> EntityModel.of(user,
+                linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
                 linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel(
                     "users")))
         .collect(Collectors.toList());
-    return CollectionModel.of(appUserEntityModels,
+    return CollectionModel.of(users,
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withSelfRel());
   }
 
-  @DeleteMapping("/{id}")
-  public void deleteUser(@PathVariable Long id) {
-    appUserService.deleteUser(id);
+  @DeleteMapping("/{userId}")
+  public void deleteUser(@PathVariable Long userId) {
+    appUserService.deleteUser(userId);
+  }
+
+  @GetMapping("/{userId}/blogs")
+  public CollectionModel<EntityModel<BlogDTO>> getUserBlogs(@PathVariable Long userId,
+      Pageable pageable) {
+    List<BlogDTO> blogDTOS = blogService.getUserBlogs(userId, pageable);
+    List<EntityModel<BlogDTO>> blogs = blogDTOS.stream()
+        .map(blog -> EntityModel.of(blog,
+            linkTo(methodOn(BlogController.class).getBlog(blog.getBlogId())).withSelfRel(),
+            linkTo(methodOn(BlogController.class).getBlogs(Pageable.unpaged())).withRel("blogs")))
+        .collect(Collectors.toList());
+
+    return CollectionModel.of(blogs,
+        linkTo(methodOn(AppUserController.class).getUserBlogs(userId,
+            Pageable.unpaged())).withSelfRel());
   }
 }

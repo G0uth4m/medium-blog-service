@@ -1,14 +1,18 @@
 package com.goutham.mediumblogservice.service;
 
+import com.goutham.mediumblogservice.dto.blog.BlogCreationDTO;
+import com.goutham.mediumblogservice.dto.blog.BlogDTO;
+import com.goutham.mediumblogservice.dto.blog.BlogUpdationDTO;
 import com.goutham.mediumblogservice.entity.Blog;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
 
 public interface BlogService {
-  Blog createBlog(Blog blog, Long authorId);
-  Blog editBlog(Long blogId, Blog blog);
-  Blog getBlog(Long blogId);
-  Page<Blog> getAllBlogs(Pageable pageable);
-  Page<Blog> getUserBlogs(Long authorId, Pageable pageable);
+  BlogDTO createBlog(BlogCreationDTO blogCreationDTO);
+  BlogDTO editBlog(Long blogId, BlogUpdationDTO blogUpdationDTO);
+  BlogDTO getBlog(Long blogId);
+  List<BlogDTO> getAllBlogs(Pageable pageable);
+  List<BlogDTO> getUserBlogs(Long authorId, Pageable pageable);
+  Blog getBlogDAO(Long blogId);
   void deleteBlog(Long blogId);
 }

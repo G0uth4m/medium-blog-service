@@ -13,11 +13,4 @@ public class BlogUpdationDTO {
   @NotBlank(message = "Content cannot be empty")
   private String content;
 
-  @Data
-  public static class BlogDTO {
-    private Long id;
-    private String title;
-    private String content;
-    private AppUserDTO author;
-  }
 }
