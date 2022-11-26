@@ -11,6 +11,13 @@ public class ErrorResponse {
   private LocalDateTime timestamp;
   private Integer status;
   private String error;
-  private List<String> message;
+  private List<Violation> message;
   private String path;
+
+  @Data
+  @Builder
+  public static class Violation {
+    private String field;
+    private String message;
+  }
 }
