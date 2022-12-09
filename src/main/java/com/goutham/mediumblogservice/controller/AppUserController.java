@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -60,7 +61,7 @@ public class AppUserController {
   }
 
   @GetMapping
-  public CollectionModel<EntityModel<AppUserDTO>> getUsers(Pageable pageable) {
+  public CollectionModel<EntityModel<AppUserDTO>> getUsers(@ParameterObject Pageable pageable) {
     List<AppUserDTO> appUsers = appUserService.getUsers(pageable);
     List<EntityModel<AppUserDTO>> users = appUsers.stream().map(
             user -> EntityModel.of(user,
@@ -79,7 +80,7 @@ public class AppUserController {
 
   @GetMapping("/{userId}/blogs")
   public CollectionModel<EntityModel<BlogDTO>> getUserBlogs(@PathVariable Long userId,
-      Pageable pageable) {
+      @ParameterObject Pageable pageable) {
     List<BlogDTO> blogDTOS = blogService.getUserBlogs(userId, pageable);
     List<EntityModel<BlogDTO>> blogs = blogDTOS.stream()
         .map(blog -> EntityModel.of(blog,
