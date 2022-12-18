@@ -12,6 +12,7 @@ import com.goutham.mediumblogservice.security.dto.JWTResponse;
 import com.goutham.mediumblogservice.security.util.JWTUtil;
 import com.goutham.mediumblogservice.service.AppUserService;
 import com.goutham.mediumblogservice.service.BlogService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -52,6 +53,7 @@ public class AppUserController {
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
+  @SecurityRequirement(name = "Bearer Authentication")
   @PreAuthorize("#username == authentication.principal.username")
   @PutMapping("/{username}")
   public EntityModel<AppUserDTO> updateUser(@PathVariable String username,
@@ -62,6 +64,7 @@ public class AppUserController {
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping("/{username}")
   public EntityModel<AppUserDTO> getUser(@PathVariable String username) {
     AppUserDTO user = appUserService.getUser(username);
@@ -70,6 +73,7 @@ public class AppUserController {
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping
   public CollectionModel<EntityModel<AppUserDTO>> getUsers(@ParameterObject Pageable pageable) {
     List<AppUserDTO> appUsers = appUserService.getUsers(pageable);
@@ -83,12 +87,14 @@ public class AppUserController {
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withSelfRel());
   }
 
+  @SecurityRequirement(name = "Bearer Authentication")
   @PreAuthorize("#username == authentication.principal.username or hasRole('ROLE_ADMIN')")
   @DeleteMapping("/{username}")
   public void deleteUser(@PathVariable String username) {
     appUserService.deleteUser(username);
   }
 
+  @SecurityRequirement(name = "Bearer Authentication")
   @GetMapping("/{username}/blogs")
   public CollectionModel<EntityModel<BlogDTO>> getUserBlogs(@PathVariable String username,
       @ParameterObject Pageable pageable) {
@@ -114,4 +120,5 @@ public class AppUserController {
     return EntityModel.of(jwtResponse,
         linkTo(methodOn(AppUserController.class).login(jwtRequest)).withSelfRel());
   }
+
 }
