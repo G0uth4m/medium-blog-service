@@ -14,5 +14,5 @@ public interface AppUserService {
   List<AppUserDTO> getUsers(Pageable pageable);
   void deleteUser(String username);
   Boolean isUserExists(String username);
-  AppUser getUserDAO(Long userId);
+  AppUser getUserDAO(String username);
 }

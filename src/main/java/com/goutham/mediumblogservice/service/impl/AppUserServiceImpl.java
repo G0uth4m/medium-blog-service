@@ -92,9 +92,9 @@ public class AppUserServiceImpl implements AppUserService {
   }
 
   @Override
-  public AppUser getUserDAO(Long userId) {
-    return appUserRepository.findById(userId).orElseThrow(() -> {
-      log.error("User: {} does not exist", userId);
+  public AppUser getUserDAO(String username) {
+    return appUserRepository.findByUsername(username).orElseThrow(() -> {
+      log.error("User: {} does not exist", username);
       return new ResourceNotFoundException("User does not exist");
     });
   }

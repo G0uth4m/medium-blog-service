@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,7 +31,7 @@ public class JWTFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    String tokenHeader = request.getHeader("Authorization");
+    String tokenHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
     String username = null;
     String token = null;
@@ -43,8 +44,6 @@ public class JWTFilter extends OncePerRequestFilter {
       } catch (ExpiredJwtException e) {
         log.error("JWT has expired");
       }
-    } else {
-      log.error("Bearer string is not found in Authorization header");
     }
 
     if (Objects.nonNull(username)
@@ -61,4 +60,5 @@ public class JWTFilter extends OncePerRequestFilter {
     }
     filterChain.doFilter(request, response);
   }
+
 }

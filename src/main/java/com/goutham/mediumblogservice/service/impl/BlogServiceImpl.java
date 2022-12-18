@@ -34,7 +34,7 @@ public class BlogServiceImpl implements BlogService {
 
   @Override
   public BlogDTO createBlog(BlogCreationDTO blogCreationDTO) {
-    AppUser user = appUserService.getUserDAO(blogCreationDTO.getAuthorId());
+    AppUser user = appUserService.getUserDAO(SecurityContextUtil.getUsername());
     LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
     Blog blog = Blog.builder()
         .title(blogCreationDTO.getTitle())
@@ -52,7 +52,7 @@ public class BlogServiceImpl implements BlogService {
     Blog blog = getBlogDAO(blogId);
     if (!Objects.equals(blog.getAuthor().getUsername(), SecurityContextUtil.getUsername())) {
       log.error("User: {} is forbidden to edit the blog with id: {}",
-          SecurityContextUtil.getUsername(), blog);
+          SecurityContextUtil.getUsername(), blog.getBlogId());
       throw new AccessDeniedException("Access is denied");
     }
     blog.setTitle(blogUpdationDTO.getTitle());
@@ -102,7 +102,7 @@ public class BlogServiceImpl implements BlogService {
     if (!Objects.equals(blog.getAuthor().getUsername(), SecurityContextUtil.getUsername())
         && !SecurityContextUtil.getRoles().contains(UserRole.ROLE_ADMIN)) {
       log.error("User: {} is forbidden to delete blog with id: {}",
-          SecurityContextUtil.getUsername(), blog);
+          SecurityContextUtil.getUsername(), blog.getBlogId());
       throw new AccessDeniedException("Access is denied");
     }
     blogRepository.deleteById(blogId);
