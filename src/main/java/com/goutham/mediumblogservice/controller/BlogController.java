@@ -7,6 +7,7 @@ import com.goutham.mediumblogservice.dto.blog.BlogCreationDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogUpdationDTO;
 import com.goutham.mediumblogservice.service.BlogService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/v1/api/blogs")
+@SecurityRequirement(name = "Bearer Authentication")
 public class BlogController {
 
   private final BlogService blogService;
@@ -73,4 +75,5 @@ public class BlogController {
   public void deleteBlog(@PathVariable Long blogId) {
     blogService.deleteBlog(blogId);
   }
+
 }
