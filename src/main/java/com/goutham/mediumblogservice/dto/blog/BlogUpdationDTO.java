@@ -1,6 +1,5 @@
 package com.goutham.mediumblogservice.dto.blog;
 
-import com.goutham.mediumblogservice.dto.appUser.AppUserDTO;
 import javax.validation.constraints.NotBlank;
 import lombok.Data;
 

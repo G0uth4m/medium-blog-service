@@ -12,7 +12,7 @@ public interface BlogService {
   BlogDTO editBlog(Long blogId, BlogUpdationDTO blogUpdationDTO);
   BlogDTO getBlog(Long blogId);
   List<BlogDTO> getAllBlogs(Pageable pageable);
-  List<BlogDTO> getUserBlogs(Long authorId, Pageable pageable);
+  List<BlogDTO> getUserBlogs(String username, Pageable pageable);
   Blog getBlogDAO(Long blogId);
   void deleteBlog(Long blogId);
 }

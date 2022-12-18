@@ -1,7 +1,6 @@
 package com.goutham.mediumblogservice.response;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,13 +10,7 @@ public class ErrorResponse {
   private LocalDateTime timestamp;
   private Integer status;
   private String error;
-  private List<Violation> message;
+  private Object message;
   private String path;
 
-  @Data
-  @Builder
-  public static class Violation {
-    private String field;
-    private String message;
-  }
 }

@@ -5,18 +5,22 @@ import com.goutham.mediumblogservice.dto.blog.BlogDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogUpdationDTO;
 import com.goutham.mediumblogservice.entity.AppUser;
 import com.goutham.mediumblogservice.entity.Blog;
+import com.goutham.mediumblogservice.enums.UserRole;
 import com.goutham.mediumblogservice.exception.ResourceNotFoundException;
 import com.goutham.mediumblogservice.repository.BlogRepository;
+import com.goutham.mediumblogservice.security.util.SecurityContextUtil;
 import com.goutham.mediumblogservice.service.AppUserService;
 import com.goutham.mediumblogservice.service.BlogService;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -30,7 +34,7 @@ public class BlogServiceImpl implements BlogService {
 
   @Override
   public BlogDTO createBlog(BlogCreationDTO blogCreationDTO) {
-    AppUser user = appUserService.getUserDAO(blogCreationDTO.getAuthorId());
+    AppUser user = appUserService.getUserDAO(SecurityContextUtil.getUsername());
     LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
     Blog blog = Blog.builder()
         .title(blogCreationDTO.getTitle())
@@ -46,6 +50,11 @@ public class BlogServiceImpl implements BlogService {
   @Override
   public BlogDTO editBlog(Long blogId, BlogUpdationDTO blogUpdationDTO) {
     Blog blog = getBlogDAO(blogId);
+    if (!Objects.equals(blog.getAuthor().getUsername(), SecurityContextUtil.getUsername())) {
+      log.error("User: {} is forbidden to edit the blog with id: {}",
+          SecurityContextUtil.getUsername(), blog.getBlogId());
+      throw new AccessDeniedException("Access is denied");
+    }
     blog.setTitle(blogUpdationDTO.getTitle());
     blog.setContent(blogUpdationDTO.getContent());
     blog.setLastModifiedAt(LocalDateTime.now(ZoneOffset.UTC));
@@ -68,12 +77,12 @@ public class BlogServiceImpl implements BlogService {
   }
 
   @Override
-  public List<BlogDTO> getUserBlogs(Long authorId, Pageable pageable) {
-    if (!appUserService.isUserExists(authorId)) {
-      log.error("User: {} does not exist", authorId);
+  public List<BlogDTO> getUserBlogs(String username, Pageable pageable) {
+    if (!appUserService.isUserExists(username)) {
+      log.error("User: {} does not exist", username);
       throw new ResourceNotFoundException("User does not exist");
     }
-    return blogRepository.findAllByAuthor_UserId(authorId, pageable)
+    return blogRepository.findAllByAuthor_Username(username, pageable)
         .stream()
         .map(blog -> modelMapper.map(blog, BlogDTO.class))
         .collect(Collectors.toList());
@@ -89,9 +98,12 @@ public class BlogServiceImpl implements BlogService {
 
   @Override
   public void deleteBlog(Long blogId) {
-    if (!blogRepository.existsById(blogId)) {
-      log.error("Blog with id: {} does not exist", blogId);
-      throw new ResourceNotFoundException("Blog with given id does not exist");
+    Blog blog = getBlogDAO(blogId);
+    if (!Objects.equals(blog.getAuthor().getUsername(), SecurityContextUtil.getUsername())
+        && !SecurityContextUtil.getRoles().contains(UserRole.ROLE_ADMIN)) {
+      log.error("User: {} is forbidden to delete blog with id: {}",
+          SecurityContextUtil.getUsername(), blog.getBlogId());
+      throw new AccessDeniedException("Access is denied");
     }
     blogRepository.deleteById(blogId);
   }
