@@ -7,6 +7,9 @@ import com.goutham.mediumblogservice.dto.appUser.AppUserCreationDTO;
 import com.goutham.mediumblogservice.dto.appUser.AppUserDTO;
 import com.goutham.mediumblogservice.dto.appUser.AppUserUpdationDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogDTO;
+import com.goutham.mediumblogservice.security.dto.JWTRequest;
+import com.goutham.mediumblogservice.security.dto.JWTResponse;
+import com.goutham.mediumblogservice.security.util.JWTUtil;
 import com.goutham.mediumblogservice.service.AppUserService;
 import com.goutham.mediumblogservice.service.BlogService;
 import java.util.List;
@@ -17,6 +20,10 @@ import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,30 +40,33 @@ public class AppUserController {
 
   private final AppUserService appUserService;
   private final BlogService blogService;
+  private final AuthenticationManager authenticationManager;
+  private final JWTUtil jwtUtil;
 
   @PostMapping
   public EntityModel<AppUserDTO> createUser(
       @Valid @RequestBody AppUserCreationDTO appUserCreationDTO) {
     AppUserDTO user = appUserService.createUser(appUserCreationDTO);
     return EntityModel.of(user,
-        linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
+        linkTo(methodOn(AppUserController.class).getUser(user.getUsername())).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
-  @PutMapping("/{userId}")
-  public EntityModel<AppUserDTO> updateUser(@PathVariable Long userId,
+  @PreAuthorize("#username == authentication.principal.username")
+  @PutMapping("/{username}")
+  public EntityModel<AppUserDTO> updateUser(@PathVariable String username,
       @Valid @RequestBody AppUserUpdationDTO appUserUpdationDTO) {
-    AppUserDTO user = appUserService.updateUser(userId, appUserUpdationDTO);
+    AppUserDTO user = appUserService.updateUser(username, appUserUpdationDTO);
     return EntityModel.of(user,
-        linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
+        linkTo(methodOn(AppUserController.class).getUser(user.getUsername())).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
-  @GetMapping("/{userId}")
-  public EntityModel<AppUserDTO> getUser(@PathVariable Long userId) {
-    AppUserDTO user = appUserService.getUser(userId);
+  @GetMapping("/{username}")
+  public EntityModel<AppUserDTO> getUser(@PathVariable String username) {
+    AppUserDTO user = appUserService.getUser(username);
     return EntityModel.of(user,
-        linkTo(methodOn(AppUserController.class).getUser(userId)).withSelfRel(),
+        linkTo(methodOn(AppUserController.class).getUser(user.getUsername())).withSelfRel(),
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel("users"));
   }
 
@@ -65,7 +75,7 @@ public class AppUserController {
     List<AppUserDTO> appUsers = appUserService.getUsers(pageable);
     List<EntityModel<AppUserDTO>> users = appUsers.stream().map(
             user -> EntityModel.of(user,
-                linkTo(methodOn(AppUserController.class).getUser(user.getUserId())).withSelfRel(),
+                linkTo(methodOn(AppUserController.class).getUser(user.getUsername())).withSelfRel(),
                 linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withRel(
                     "users")))
         .collect(Collectors.toList());
@@ -73,15 +83,16 @@ public class AppUserController {
         linkTo(methodOn(AppUserController.class).getUsers(Pageable.unpaged())).withSelfRel());
   }
 
-  @DeleteMapping("/{userId}")
-  public void deleteUser(@PathVariable Long userId) {
-    appUserService.deleteUser(userId);
+  @PreAuthorize("#username == authentication.principal.username or hasRole('ROLE_ADMIN')")
+  @DeleteMapping("/{username}")
+  public void deleteUser(@PathVariable String username) {
+    appUserService.deleteUser(username);
   }
 
-  @GetMapping("/{userId}/blogs")
-  public CollectionModel<EntityModel<BlogDTO>> getUserBlogs(@PathVariable Long userId,
+  @GetMapping("/{username}/blogs")
+  public CollectionModel<EntityModel<BlogDTO>> getUserBlogs(@PathVariable String username,
       @ParameterObject Pageable pageable) {
-    List<BlogDTO> blogDTOS = blogService.getUserBlogs(userId, pageable);
+    List<BlogDTO> blogDTOS = blogService.getUserBlogs(username, pageable);
     List<EntityModel<BlogDTO>> blogs = blogDTOS.stream()
         .map(blog -> EntityModel.of(blog,
             linkTo(methodOn(BlogController.class).getBlog(blog.getBlogId())).withSelfRel(),
@@ -89,7 +100,18 @@ public class AppUserController {
         .collect(Collectors.toList());
 
     return CollectionModel.of(blogs,
-        linkTo(methodOn(AppUserController.class).getUserBlogs(userId,
+        linkTo(methodOn(AppUserController.class).getUserBlogs(username,
             Pageable.unpaged())).withSelfRel());
+  }
+
+  @PostMapping("/login")
+  public EntityModel<JWTResponse> login(@RequestBody JWTRequest jwtRequest) {
+    Authentication authentication = authenticationManager.authenticate(
+        new UsernamePasswordAuthenticationToken(jwtRequest.getUsername(),
+            jwtRequest.getPassword()));
+    String token = jwtUtil.generateToken(authentication);
+    JWTResponse jwtResponse = new JWTResponse(token);
+    return EntityModel.of(jwtResponse,
+        linkTo(methodOn(AppUserController.class).login(jwtRequest)).withSelfRel());
   }
 }

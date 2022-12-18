@@ -9,10 +9,10 @@ import org.springframework.data.domain.Pageable;
 
 public interface AppUserService {
   AppUserDTO createUser(AppUserCreationDTO appUserCreationDTO);
-  AppUserDTO updateUser(Long userId, AppUserUpdationDTO appUserUpdationDTO);
-  AppUserDTO getUser(Long userId);
+  AppUserDTO updateUser(String username, AppUserUpdationDTO appUserUpdationDTO);
+  AppUserDTO getUser(String username);
   List<AppUserDTO> getUsers(Pageable pageable);
-  void deleteUser(Long id);
-  Boolean isUserExists(Long userId);
+  void deleteUser(String username);
+  Boolean isUserExists(String username);
   AppUser getUserDAO(Long userId);
 }

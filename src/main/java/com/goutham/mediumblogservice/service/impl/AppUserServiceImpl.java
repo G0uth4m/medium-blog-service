@@ -9,7 +9,6 @@ import com.goutham.mediumblogservice.exception.ResourceNotFoundException;
 import com.goutham.mediumblogservice.repository.AppUserRepository;
 import com.goutham.mediumblogservice.service.AppUserService;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -29,6 +29,8 @@ public class AppUserServiceImpl implements AppUserService {
 
   private final AppUserRepository appUserRepository;
 
+  private final PasswordEncoder passwordEncoder;
+
   @Override
   public AppUserDTO createUser(AppUserCreationDTO appUserCreationDTO) {
     if (appUserRepository.existsByUsername(appUserCreationDTO.getUsername())) {
@@ -37,6 +39,7 @@ public class AppUserServiceImpl implements AppUserService {
     }
     AppUser appUser = modelMapper.map(appUserCreationDTO, AppUser.class);
     LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+    appUser.setPassword(passwordEncoder.encode(appUserCreationDTO.getPassword()));
     appUser.setCreatedAt(now);
     appUser.setLastModifiedAt(now);
     appUser = appUserRepository.save(appUser);
@@ -44,9 +47,9 @@ public class AppUserServiceImpl implements AppUserService {
   }
 
   @Override
-  public AppUserDTO updateUser(Long userId, AppUserUpdationDTO appUserUpdationDTO) {
-    AppUser appUser = appUserRepository.findById(userId).orElseThrow(() -> {
-      log.error("User: {} does not exist", userId);
+  public AppUserDTO updateUser(String username, AppUserUpdationDTO appUserUpdationDTO) {
+    AppUser appUser = appUserRepository.findByUsername(username).orElseThrow(() -> {
+      log.error("User: {} does not exist", username);
       return new ResourceNotFoundException("User does not exist");
     });
     appUser.setFirstName(appUserUpdationDTO.getFirstName());
@@ -58,9 +61,9 @@ public class AppUserServiceImpl implements AppUserService {
   }
 
   @Override
-  public AppUserDTO getUser(Long userId) {
-    AppUser appUser = appUserRepository.findById(userId).orElseThrow(() -> {
-      log.error("User: {} does not exist", userId);
+  public AppUserDTO getUser(String username) {
+    AppUser appUser = appUserRepository.findByUsername(username).orElseThrow(() -> {
+      log.error("User: {} does not exist", username);
       return new ResourceNotFoundException("User does not exist");
     });
     return modelMapper.map(appUser, AppUserDTO.class);
@@ -75,17 +78,17 @@ public class AppUserServiceImpl implements AppUserService {
   }
 
   @Override
-  public void deleteUser(Long id) {
-    appUserRepository.findById(id).orElseThrow(() -> {
-      log.error("User: {} does not exist", id);
+  public void deleteUser(String username) {
+    AppUser appUser = appUserRepository.findByUsername(username).orElseThrow(() -> {
+      log.error("User: {} does not exist", username);
       return new ResourceNotFoundException("User does not exist");
     });
-    appUserRepository.deleteById(id);
+    appUserRepository.delete(appUser);
   }
 
   @Override
-  public Boolean isUserExists(Long userId) {
-    return appUserRepository.findById(userId).isPresent();
+  public Boolean isUserExists(String username) {
+    return appUserRepository.existsByUsername(username);
   }
 
   @Override
