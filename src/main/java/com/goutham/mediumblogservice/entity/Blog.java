@@ -1,11 +1,16 @@
 package com.goutham.mediumblogservice.entity;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -34,6 +39,13 @@ public class Blog {
 
   @ManyToOne
   private AppUser author;
+
+  @ManyToMany
+  @JoinTable(
+      name = "clap",
+      joinColumns = @JoinColumn(name = "blog_id"),
+      inverseJoinColumns = @JoinColumn(name = "user_id"))
+  private Set<AppUser> claps;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;

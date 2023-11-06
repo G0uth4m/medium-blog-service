@@ -6,6 +6,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import com.goutham.mediumblogservice.dto.blog.BlogCreationDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogDTO;
 import com.goutham.mediumblogservice.dto.blog.BlogUpdationDTO;
+import com.goutham.mediumblogservice.dto.clap.ClapCreationDTO;
 import com.goutham.mediumblogservice.service.BlogService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
@@ -16,6 +17,7 @@ import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,8 +65,8 @@ public class BlogController {
   }
 
   @PutMapping("/{blogId}")
-  public EntityModel<BlogDTO> editBlog(@PathVariable Long blogId, @Valid @RequestBody
-      BlogUpdationDTO blogUpdationDTO) {
+  public EntityModel<BlogDTO> editBlog(@PathVariable Long blogId,
+      @Valid @RequestBody BlogUpdationDTO blogUpdationDTO) {
     BlogDTO blog = blogService.editBlog(blogId, blogUpdationDTO);
     return EntityModel.of(blog,
         linkTo(methodOn(BlogController.class).getBlog(blog.getBlogId())).withSelfRel(),
@@ -74,6 +76,18 @@ public class BlogController {
   @DeleteMapping("/{blogId}")
   public void deleteBlog(@PathVariable Long blogId) {
     blogService.deleteBlog(blogId);
+  }
+
+  @PreAuthorize("#clapCreationDTO.username == authentication.principal.name")
+  @PostMapping("/{blogId}/claps")
+  public void clapBlog(@PathVariable Long blogId, @RequestBody ClapCreationDTO clapCreationDTO) {
+    blogService.clapBlog(blogId, clapCreationDTO);
+  }
+
+  @PreAuthorize("#username == authentication.principal.name")
+  @DeleteMapping("/{blogId}/claps/{username}")
+  public void removeClap(@PathVariable Long blogId, @PathVariable String username) {
+    blogService.removeClap(blogId, username);
   }
 
 }
