@@ -1,5 +1,6 @@
 package com.goutham.mediumblogservice.dto.appUser;
 
+import java.time.LocalDateTime;
 import lombok.Data;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -12,6 +13,6 @@ public class AppUserDTO {
   private String lastName;
   private String email;
   private String profilePicURL;
-  private String createdAt;
-  private String lastModifiedAt;
+  private LocalDateTime createdAt;
+  private LocalDateTime lastModifiedAt;
 }
